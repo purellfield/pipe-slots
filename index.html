@@ -4,8 +4,413 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pipe Slots — jump in to book a call</title>
+  <style>
+    :root {
+      --sky: #5c94fc;
+      --ground: #c84c0c;
+      --dirt: #e89a48;
+      --pipe: #2d8a2d;
+      --pipe-dark: #1a5c1a;
+      --pipe-light: #3cb03c;
+      --lip: #36a036;
+      --ink: #1a1208;
+      --paper: #fff8e8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; font-family: "Trebuchet MS", "Segoe UI", sans-serif; background: var(--sky); color: var(--ink); }
+    #setup {
+      position: relative; z-index: 20;
+      min-height: 100%; overflow: auto;
+      background: linear-gradient(#5c94fc 0%, #87ceeb 55%, #c84c0c 55.2%, #e89a48 100%);
+      padding: 32px 16px 80px;
+    }
+    .card {
+      max-width: 560px; margin: 0 auto;
+      background: var(--paper);
+      border: 4px solid #1a1208;
+      box-shadow: 8px 8px 0 #1a1208;
+      padding: 28px 24px;
+    }
+    h1 { font-size: 28px; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .sub { color: #5a4a38; margin-bottom: 22px; line-height: 1.45; }
+    label { display: block; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; margin: 16px 0 6px; }
+    input[type="email"], input[type="text"], textarea {
+      width: 100%; padding: 10px 12px; font-size: 16px;
+      border: 3px solid #1a1208; background: #fff; font-family: inherit;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    .hint { font-size: 12px; color: #6a5a48; margin-top: 4px; }
+    .row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+    button, .btn {
+      cursor: pointer; font-family: inherit; font-weight: 800;
+      border: 3px solid #1a1208; background: #f4d03f; color: #1a1208;
+      padding: 10px 16px; font-size: 15px; box-shadow: 3px 3px 0 #1a1208;
+    }
+    button:hover, .btn:hover { transform: translate(1px, 1px); box-shadow: 2px 2px 0 #1a1208; }
+    button.green { background: #3cb03c; color: #fff; }
+    #shareBox { display: none; margin-top: 18px; }
+    #shareUrl { font-size: 13px; word-break: break-all; background: #fff; }
+    #game { display: none; position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--sky); }
+    .clouds {
+      position: absolute; inset: 0 0 38% 0;
+      background:
+        radial-gradient(circle at 12% 30%, #fff 0 28px, transparent 29px),
+        radial-gradient(circle at 18% 30%, #fff 0 36px, transparent 37px),
+        radial-gradient(circle at 24% 30%, #fff 0 26px, transparent 27px),
+        radial-gradient(circle at 58% 18%, #fff 0 32px, transparent 33px),
+        radial-gradient(circle at 64% 18%, #fff 0 42px, transparent 43px),
+        radial-gradient(circle at 72% 18%, #fff 0 30px, transparent 31px),
+        radial-gradient(circle at 86% 40%, #fff 0 24px, transparent 25px),
+        radial-gradient(circle at 91% 40%, #fff 0 34px, transparent 35px);
+      opacity: 0.9; pointer-events: none;
+    }
+    .hills {
+      position: absolute; left: 0; right: 0; bottom: 18%; height: 160px;
+      background:
+        radial-gradient(ellipse 220px 140px at 18% 100%, #62b84a 0 70%, transparent 71%),
+        radial-gradient(ellipse 280px 160px at 55% 100%, #4aa03a 0 70%, transparent 71%),
+        radial-gradient(ellipse 200px 120px at 88% 100%, #62b84a 0 70%, transparent 71%);
+      pointer-events: none;
+    }
+    .ground {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 18%;
+      background:
+        repeating-linear-gradient(90deg, #c84c0c 0 28px, #b44408 28px 30px),
+        linear-gradient(#e89a48 0 18px, #c84c0c 18px);
+      background-size: 30px 18px, 100% 100%;
+      border-top: 6px solid #5a2208;
+      z-index: 2;
+    }
+    .world { position: absolute; inset: 0; z-index: 3; }
+    .pipe { position: absolute; width: 88px; bottom: 18%; z-index: 4; }
+    .pipe-lip {
+      height: 22px; margin: 0 -8px;
+      background: linear-gradient(90deg, #1a5c1a, #3cb03c 18%, #4cc84c 50%, #3cb03c 82%, #1a5c1a);
+      border: 3px solid #0d2e0d;
+      border-radius: 6px 6px 2px 2px;
+      box-shadow: inset 0 3px 0 rgba(255,255,255,0.25);
+    }
+    .pipe-body {
+      height: 118px;
+      background: linear-gradient(90deg, #164e16 0%, #2d8a2d 14%, #36a036 50%, #2d8a2d 86%, #164e16 100%);
+      border-left: 3px solid #0d2e0d;
+      border-right: 3px solid #0d2e0d;
+      border-bottom: 3px solid #0d2e0d;
+      position: relative;
+    }
+    .pipe-label {
+      position: absolute; left: 50%; top: 28px; transform: translateX(-50%);
+      width: 78px; text-align: center;
+      background: #fff8e8; border: 2px solid #1a1208;
+      font-size: 11px; font-weight: 800; line-height: 1.2;
+      padding: 4px 3px; color: #1a1208;
+    }
+    .hero {
+      position: absolute; width: 44px; height: 56px; bottom: 18%; left: 80px; z-index: 6;
+      transform-origin: bottom center;
+    }
+    .hero.flip { transform: scaleX(-1); }
+    .hero.flip .face { transform: scaleX(-1); }
+    .cap {
+      position: absolute; top: 0; left: 4px; right: 2px; height: 14px;
+      background: #d22; border: 2px solid #1a1208; border-radius: 10px 10px 2px 2px;
+    }
+    .cap:after {
+      content: ""; position: absolute; left: -8px; bottom: 2px;
+      width: 12px; height: 6px; background: #d22; border: 2px solid #1a1208; border-right: 0;
+    }
+    .head {
+      position: absolute; top: 12px; left: 8px; width: 26px; height: 20px;
+      background: #f0c8a0; border: 2px solid #1a1208; border-radius: 4px;
+    }
+    .face { position: absolute; inset: 0; }
+    .eye { position: absolute; top: 6px; width: 5px; height: 5px; background: #1a1208; border-radius: 50%; }
+    .eye.l { left: 5px; } .eye.r { right: 5px; }
+    .must { position: absolute; bottom: 3px; left: 4px; right: 4px; height: 4px; background: #5a3010; border-radius: 2px; }
+    .torso {
+      position: absolute; top: 30px; left: 8px; width: 26px; height: 16px;
+      background: #1a4aa0; border: 2px solid #1a1208;
+    }
+    .boot {
+      position: absolute; bottom: 0; width: 16px; height: 10px;
+      background: #6a3a18; border: 2px solid #1a1208;
+    }
+    .boot.l { left: 2px; } .boot.r { right: 2px; }
+    .hud {
+      position: absolute; top: 12px; left: 12px; right: 12px; z-index: 10;
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+      pointer-events: none;
+    }
+    .hud-chip {
+      background: #fff8e8; border: 3px solid #1a1208; padding: 8px 12px;
+      font-size: 13px; font-weight: 700; box-shadow: 3px 3px 0 #1a1208;
+      pointer-events: auto;
+    }
+    .hud-chip kbd { background: #1a1208; color: #fff8e8; padding: 1px 5px; font-size: 11px; }
+    #overlay {
+      display: none; position: absolute; inset: 0; z-index: 30;
+      background: rgba(20, 12, 4, 0.55);
+      align-items: center; justify-content: center;
+    }
+    #overlay.show { display: flex; }
+    .modal {
+      background: var(--paper); border: 4px solid #1a1208;
+      box-shadow: 8px 8px 0 #1a1208; padding: 28px 24px; max-width: 420px; width: 90%;
+      text-align: center;
+    }
+    .modal h2 { margin-bottom: 8px; }
+    .modal p { margin-bottom: 16px; color: #4a3a28; }
+    .big-time { font-size: 22px; font-weight: 800; margin: 8px 0 18px; }
+    .mobile-pad {
+      display: none; position: absolute; bottom: 8px; left: 8px; right: 8px; z-index: 12;
+      justify-content: space-between;
+    }
+    .mobile-pad button { width: 64px; height: 64px; font-size: 22px; background: rgba(255,248,232,0.9); }
+    @media (pointer: coarse) { .mobile-pad { display: flex; } }
+  </style>
 </head>
 <body>
-<p>placeholder — will replace</p>
+  <section id="setup">
+    <div class="card">
+      <h1>Pipe Slots</h1>
+      <p class="sub">Drop your available call times onto green warp pipes. Send the link. Your client walks a little jumper in and hops into the slot that works. That pick emails you.</p>
+      <label for="hostEmail">Your email (where the pick is sent)</label>
+      <input id="hostEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+      <label for="slots">Available times — one per line</label>
+      <textarea id="slots" placeholder="Thu Sep 18, 2:00 PM PT\nFri Sep 19, 10:30 AM PT\nMon Sep 22, 4:00 PM PT"></textarea>
+      <p class="hint">Keep labels short so they fit on the pipe. 2–8 slots works best.</p>
+      <label for="prompt">Optional note shown to the client</label>
+      <input id="prompt" type="text" placeholder="Pick a time for our intro call" />
+      <div class="row">
+        <button class="green" id="makeLink" type="button">Make share link</button>
+        <button id="preview" type="button">Preview game</button>
+      </div>
+      <div id="shareBox">
+        <label>Send this URL</label>
+        <input id="shareUrl" type="text" readonly />
+        <div class="row">
+          <button id="copyLink" type="button">Copy link</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="game">
+    <div class="clouds"></div>
+    <div class="hills"></div>
+    <div class="ground"></div>
+    <div class="world" id="world"></div>
+    <div class="hud">
+      <div class="hud-chip" id="promptChip">Jump into a green pipe to pick a time</div>
+      <div class="hud-chip"><kbd>←</kbd> <kbd>→</kbd> move · <kbd>↑</kbd> / <kbd>space</kbd> jump · stand on a pipe</div>
+    </div>
+    <div class="mobile-pad">
+      <button type="button" id="btnL">◀</button>
+      <button type="button" id="btnJ">▲</button>
+      <button type="button" id="btnR">▶</button>
+    </div>
+    <div id="overlay">
+      <div class="modal" id="modal"></div>
+    </div>
+  </section>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    function parseParams() {
+      const q = new URLSearchParams(location.search);
+      const email = (q.get("e") || "").trim();
+      const note = (q.get("n") || "").trim();
+      const raw = q.get("s") || "";
+      const slots = raw.split("|").map(s => decodeURIComponent(s).trim()).filter(Boolean);
+      return { email, note, slots };
+    }
+    function encodeLink(email, note, slots) {
+      const q = new URLSearchParams();
+      q.set("e", email.trim());
+      if (note.trim()) q.set("n", note.trim());
+      q.set("s", slots.map(s => encodeURIComponent(s.trim())).filter(Boolean).join("|"));
+      const url = new URL(location.href);
+      url.search = q.toString();
+      url.hash = "";
+      return url.toString();
+    }
+    $("makeLink").onclick = () => {
+      const email = $("hostEmail").value.trim();
+      const slots = $("slots").value.split("\n").map(s => s.trim()).filter(Boolean);
+      if (!email || !email.includes("@")) { alert("Add your email first."); return; }
+      if (slots.length < 1) { alert("Add at least one time."); return; }
+      const url = encodeLink(email, $("prompt").value, slots);
+      $("shareUrl").value = url;
+      $("shareBox").style.display = "block";
+    };
+    $("copyLink").onclick = async () => {
+      try {
+        await navigator.clipboard.writeText($("shareUrl").value);
+        $("copyLink").textContent = "Copied";
+        setTimeout(() => $("copyLink").textContent = "Copy link", 1500);
+      } catch {
+        $("shareUrl").select();
+      }
+    };
+    $("preview").onclick = () => {
+      const email = $("hostEmail").value.trim() || "preview@example.com";
+      const slots = $("slots").value.split("\n").map(s => s.trim()).filter(Boolean);
+      const use = slots.length ? slots : ["Thu 2:00 PM", "Fri 10:30 AM", "Mon 4:00 PM"];
+      startGame({ email, note: $("prompt").value, slots: use, preview: email === "preview@example.com" && !$("hostEmail").value.trim() });
+    };
+    const state = {
+      x: 80, y: 0, vx: 0, vy: 0,
+      onGround: true, facing: 1,
+      warping: false, selected: null,
+      pipes: [], keys: {}, email: "", preview: false, W: 800, groundH: 0
+    };
+    function layoutPipes(slots) {
+      const world = $("world");
+      world.innerHTML = "";
+      const hero = document.createElement("div");
+      hero.className = "hero";
+      hero.id = "hero";
+      hero.innerHTML = `<div class="cap"></div><div class="head"><div class="face"><div class="eye l"></div><div class="eye r"></div><div class="must"></div></div></div><div class="torso"></div><div class="boot l"></div><div class="boot r"></div>`;
+      world.appendChild(hero);
+      const W = Math.max(window.innerWidth, 640);
+      state.W = W;
+      const n = slots.length;
+      const margin = 90;
+      const usable = W - margin * 2 - 88;
+      const gap = n === 1 ? 0 : usable / Math.max(n - 1, 1);
+      state.pipes = slots.map((label, i) => {
+        const el = document.createElement("div");
+        el.className = "pipe";
+        const left = n === 1 ? (W - 88) / 2 : margin + i * gap;
+        el.style.left = left + "px";
+        el.innerHTML = `<div class="pipe-lip"></div><div class="pipe-body"><div class="pipe-label"></div></div>`;
+        el.querySelector(".pipe-label").textContent = label;
+        world.appendChild(el);
+        return { label, left, width: 88, topH: 140 };
+      });
+    }
+    function startGame(cfg) {
+      $("setup").style.display = "none";
+      $("game").style.display = "block";
+      state.email = cfg.email;
+      state.preview = !!cfg.preview;
+      state.x = 70; state.y = 0; state.vx = 0; state.vy = 0;
+      state.onGround = true; state.warping = false; state.selected = null;
+      if (cfg.note) $("promptChip").textContent = cfg.note;
+      layoutPipes(cfg.slots);
+      requestAnimationFrame(loop);
+    }
+    window.addEventListener("resize", () => {
+      if ($("game").style.display === "block" && !state.warping) {
+        layoutPipes(state.pipes.map(p => p.label));
+      }
+    });
+    const keys = state.keys;
+    window.addEventListener("keydown", e => {
+      keys[e.key.toLowerCase()] = true;
+      if (["arrowup","arrowdown","arrowleft","arrowright"," "].includes(e.key.toLowerCase()) || e.key === " ") e.preventDefault();
+    });
+    window.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
+    function hold(btn, key) {
+      btn.addEventListener("pointerdown", ev => { ev.preventDefault(); keys[key] = true; });
+      const off = () => { keys[key] = false; };
+      btn.addEventListener("pointerup", off);
+      btn.addEventListener("pointerleave", off);
+      btn.addEventListener("pointercancel", off);
+    }
+    hold($("btnL"), "arrowleft");
+    hold($("btnR"), "arrowright");
+    hold($("btnJ"), "arrowup");
+    function loop() {
+      if (state.warping) return;
+      const left = keys["arrowleft"] || keys["a"];
+      const right = keys["arrowright"] || keys["d"];
+      const jump = keys["arrowup"] || keys["w"] || keys[" "];
+      const acc = 0.7, max = 5.2, fric = 0.82, grav = 0.55, jumpV = -11.2;
+      if (left) { state.vx -= acc; state.facing = -1; }
+      if (right) { state.vx += acc; state.facing = 1; }
+      if (!left && !right) state.vx *= fric;
+      state.vx = Math.max(-max, Math.min(max, state.vx));
+      if (jump && state.onGround) { state.vy = jumpV; state.onGround = false; }
+      state.vy += grav;
+      state.x += state.vx;
+      state.y += state.vy;
+      if (state.y >= 0) { state.y = 0; state.vy = 0; state.onGround = true; }
+      const heroW = 44;
+      state.x = Math.max(8, Math.min(state.W - heroW - 8, state.x));
+      for (const p of state.pipes) {
+        const hx1 = state.x + 8, hx2 = state.x + heroW - 8;
+        const px1 = p.left + 8, px2 = p.left + p.width - 8;
+        const overlap = hx1 < px2 && hx2 > px1;
+        if (overlap && state.vy >= 0 && state.y > -130 && state.y < -90) {
+          state.y = -118; state.vy = 0; state.onGround = true;
+        }
+        if (overlap && state.onGround && state.y < -80) {
+          const cx = state.x + heroW / 2;
+          const pc = p.left + p.width / 2;
+          if (Math.abs(cx - pc) < 22) { warpInto(p); return; }
+        }
+      }
+      const hero = $("hero");
+      if (hero) {
+        hero.style.left = state.x + "px";
+        hero.style.bottom = `calc(18% + ${-state.y}px)`;
+        hero.classList.toggle("flip", state.facing < 0);
+      }
+      requestAnimationFrame(loop);
+    }
+    function warpInto(pipe) {
+      state.warping = true;
+      state.selected = pipe.label;
+      const hero = $("hero");
+      let t = 0;
+      const sink = () => {
+        t += 1;
+        if (hero) {
+          hero.style.bottom = `calc(18% + ${118 - t * 4}px)`;
+          hero.style.opacity = String(Math.max(0, 1 - t / 28));
+        }
+        if (t < 30) requestAnimationFrame(sink);
+        else showConfirm(pipe.label);
+      };
+      sink();
+    }
+    function showConfirm(label) {
+      const overlay = $("overlay");
+      const modal = $("modal");
+      overlay.classList.add("show");
+      if (state.preview) {
+        modal.innerHTML = `<h2>Warp locked</h2><div class="big-time">${escapeHtml(label)}</div><p>Preview mode — no email sent. Add your address on the setup screen and use the share link for real bookings.</p><button class="green" type="button" onclick="location.href=location.pathname">Back to setup</button>`;
+        return;
+      }
+      modal.innerHTML = `<h2>Warp locked</h2><div class="big-time">${escapeHtml(label)}</div><p>Sending this slot to the host…</p><p id="sendStatus" class="hint"></p>`;
+      sendEmail(label);
+    }
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
+    }
+    async function sendEmail(label) {
+      try {
+        const res = await fetch("https://formsubmit.co/ajax/" + encodeURIComponent(state.email), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({
+            _subject: "Pipe Slots — time picked: " + label,
+            selected_time: label,
+            page: location.href,
+            note: "A client jumped into this pipe."
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          $("modal").innerHTML = `<h2>Sent</h2><div class="big-time">${escapeHtml(label)}</div><p>The host has this slot. You can close the tab.</p>`;
+        } else {
+          throw new Error(data.message || "send failed");
+        }
+      } catch (err) {
+        $("modal").innerHTML = `<h2>Couldn’t send automatically</h2><div class="big-time">${escapeHtml(label)}</div><p>Copy this time and email the host, or try again. First-time FormSubmit addresses need a one-click confirm email.</p><p class="hint">${escapeHtml(String(err.message || err))}</p><button type="button" onclick="location.reload()">Retry</button>`;
+      }
+    }
+    const initial = parseParams();
+    if (initial.slots.length && initial.email) startGame(initial);
+  </script>
 </body>
 </html>
